@@ -27,7 +27,7 @@ GtkWidget *darea;
 
 int openZoom = 0;
 int totalGen;
-bool debug = false;
+bool debug = true;
 bool error = false;
 int sizeArray;
 
@@ -42,7 +42,7 @@ GtkWidget *viewport;
 
 int main() {
   if(debug){
-    alignStrings();
+    alignStrings(true);
   } else {
 
     GtkBuilder      *builder;
@@ -113,23 +113,23 @@ static void do_drawing(cairo_t *cr, GtkWidget *widget)
   int final_size = 0;
   int y = 60;
   //printf("Chains To Print: %i\n", chainsUsed);
-  for (int x = 0; x < chainsUsed; x++){
-    if(activeChains[x] == 0){
+  for (int x = 0; x < 0; x++){
+    if(0 == 0){
       continue;
     }
     int initial = 0;
     int final = scala*5;
 
     //printf("Relations In Chain: %i\n", relationsInChain[x]);
-    for (int i = 0; i < relationsInChain[x]; i++){
+    for (int i = 0; i < 0; i++){
       //printf("Current relation: %i\n", i);
-       int porcentaje = final + chains[x][i].value * (100*scala);
+       int porcentaje = final + 0.1 * (100*scala);
 
-       if (chains[x][i].value >= 1){
+       if (0 >= 1){
          //Para la distancia
          initial = initial + 400;
          //Refedine el valor para segir el mismo proceso
-         chains[x][i].value = chains[x][i].value - 1;
+         //chains[x][i].value = chains[x][i].value - 1;
        }
        //Dibuja el gen inicial
        cairo_move_to (cr, initial,y);
@@ -140,7 +140,7 @@ static void do_drawing(cairo_t *cr, GtkWidget *widget)
        cairo_stroke (cr);
        cairo_set_source_rgb(cr, 0.1, 0.1, 0.1);
        cairo_move_to(cr, initial + 5, y);
-       cairo_show_text(cr,chains[x][i].initialGene);
+       cairo_show_text(cr,"i");
        cairo_set_font_size(cr,scala*2);
        //Dibuja la probabilidad que hay entre cada uno
        cairo_move_to (cr,final,y);
@@ -151,8 +151,8 @@ static void do_drawing(cairo_t *cr, GtkWidget *widget)
        cairo_stroke (cr);
        //Escribe en la imagen el texto que corresponde.
        char charray[5];
-       if (chains[x][i].value != 0){
-       sprintf(charray, "%1.2f", chains[x][i].value);
+       if (0 != 0){
+       sprintf(charray, "%1.2f", 0.1);
        cairo_set_source_rgb(cr, 0.1, 0.1, 0.1);
        cairo_move_to(cr,final,y);
        cairo_show_text(cr, charray);
@@ -168,7 +168,7 @@ static void do_drawing(cairo_t *cr, GtkWidget *widget)
     }
     y= y + (10*scala)+10;
   }
-  gtk_widget_set_size_request( darea,final_size, chainsUsed*y);
+  gtk_widget_set_size_request( darea,final_size, 10);
 
 if (!openZoom){
   openZoom = 1;
@@ -395,16 +395,17 @@ void on_btn_getFile_clicked() {
   gtk_widget_hide(windowInitial);
 }
 
-void createArray(relation information[sizeArray]){
+void createArray(){
   int position = 0;
+  /*
   for (int i=1;i<totalGen+1;i++){
     for (int j=1;j<totalGen+1;j++)
       if (i<j){
         relation add;
-        /*Falta agregar el nombre
-        strcpy(add.initialGene,gtk_entry_get_text(GTK_ENTRY(tableData[i][0])));
-        strcpy(add.finalGene,gtk_entry_get_text(GTK_ENTRY(tableData[0][j])));
-        */
+        //Falta agregar el nombre
+        //strcpy(add.initialGene,gtk_entry_get_text(GTK_ENTRY(tableData[i][0])));
+        //strcpy(add.finalGene,gtk_entry_get_text(GTK_ENTRY(tableData[0][j])));
+        
         if (strcmp(gtk_entry_get_text(GTK_ENTRY(tableData[i][j])),"-")!=0){
             double x = strtod(gtk_entry_get_text(GTK_ENTRY(tableData[i][j])), NULL);
             printf("%f\n",x);
@@ -427,14 +428,14 @@ void createArray(relation information[sizeArray]){
         position ++;
 
       }
-  }
+  }*/
 }
 
 void createFile(char *fileName) {
 /*Declaración de Array*/
   sizeArray = (totalGen * totalGen-1)/2;
-  relation information[sizeArray];
-  createArray(information);
+  //relation information[sizeArray];
+  createArray();
   printf("%d\n",error);
   if (!error){
     file_tableData = fopen(fileName,"w+");
@@ -452,14 +453,11 @@ void createFile(char *fileName) {
   }
   fclose(file_tableData);
 
-  createCromosmomeMaps(information, sizeArray);
-  printf("\n\nRESULT\nChains Used: %i\n", chainsUsed);
+  //createCromosmomeMaps(information, sizeArray);
+  
   bool valid = false;
-  for(int i = 0; i < chainsUsed; i++){
-    if(activeChains[i] == 1){
-      valid = true;
-    }
-  }
+
+
   if(!valid){
     gtk_widget_show(dialog2);
   } else {

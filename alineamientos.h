@@ -6,194 +6,86 @@
 #define SIZE1 100
 #define SIZE2 100
 
-
 int usefullData = 0;
 
-struct sNode{
-	char value;
-	struct sNode* next;
-	struct sNode* prev;
-}; //Value node
+struct node{
+	int arrow;
+	int nValue;
+	char cValue;
+	struct node* next;
+	struct node* prev;
+};
+struct matrix{
+	struct node* value;
+	struct matrix* next;
+	struct matrix* prev;
+};
 
-struct sMatrix{
-	struct sNode* value;
-	struct sMatrix* next;
-	struct sMatrix* prev;
-}; //Values matrix
+struct node *string1Head = NULL;
+struct node *string1Current = NULL;
 
-struct aNode{
-	int value;
-	struct aNode* next;
-	struct aNode* prev;
-}; //Arrow node
+struct node *string2Head = NULL;
+struct node *string2Current = NULL;
 
-struct aMatrix{
-	struct aNode* value;
-	struct aMatrix* next;
-	struct aMatrix* prev;
-}; //Arrows matrix
+struct node *alignmentResult = NULL;
 
-struct sNode *string1Head = NULL;
-struct sNode *string2Head = NULL;
-struct sNode *alignmentResult = NULL;
+struct matrix *valuesTable = NULL;
+struct matrix *valuesTableCurrentRow = NULL;
+struct node *valuesTableCurrentValue = NULL;
+struct node *valuesTableCurrentValue2 = NULL;
 
-struct sNode *sTemp1;// = (struct sNode*) malloc(sizeof(struct sNode));
-struct sNode *sTemp2;// = (struct sNode*) malloc(sizeof(struct sNode));
-struct aNode *aTemp1;// = (struct aNode*) malloc(sizeof(struct aNode));
-struct aNode *aTemp2;// = (struct aNode*) malloc(sizeof(struct aNode));
+struct node *temp;
+struct matrix *tempM;
 
-struct sMatrix *valuesTable = NULL;
-struct aMatrix *arrowsTable = NULL;
+int m = 1;		//match weight
+int mm = -1;	//mismatch weight
+int gap = -2;	//gap weight
 
-int m = 1;			//match weight
-int mm = -1;		//mismatch weight
-int gap = -2;		//gap weight
-
-int String1[100];
-int String2[100];
-int alignment[200];
-int table1[101][101];	//contains values
-int table2[101][101];	//contains arrows
-
-/*Asignar math,mismatch y gapenaly*/
-void setWeight(int mValue,int mmValue,int gapValue){
+//Assign match, mismatch and gapenalty values
+void setWeight(int mValue, int mmValue, int gapValue){
 	m = mValue;
 	mm = mmValue;
 	gap = gapValue;
 }
 
-
-void alignStrings(bool nw){//da prioridad a diagonales
-	//Initialize tables
-	int val;
-	struct sMatrix *firstSM = (struct sMatrix*) malloc(sizeof(struct sMatrix));
-	sTemp1 = (struct sNode*) malloc(sizeof(struct sNode));
-	sTemp1->value = 0;
-	sTemp1->next = NULL;
-	sTemp1->prev = NULL;
-
-	firstSM->value = sTemp1;
-	firstSM->next = valuesTable;
-	firstSM->prev = NULL;
-
-	valuesTable = firstSM;
-
-	struct aMatrix *firstAM = (struct aMatrix*) malloc(sizeof(struct aMatrix));
-	aTemp1 = (struct aNode*) malloc(sizeof(struct aNode));
-	aTemp1->value = 76;
-	aTemp1->next = NULL;
-	aTemp1->prev = NULL;
-
-	firstAM->value = aTemp1;
-	firstAM->next = arrowsTable;
-	firstAM->prev = NULL;
-
-	arrowsTable = firstAM;
-
-	table1[0][0] = 0;
-	table2[0][0] = 76;
-
-	val = 0;
-	for (int i = 1; i <= SIZE1; i++) {
-		if (nw) {
-			table1[i][0] = val;
-			table2[i][0] = 1; 	//upwards arrows
-			val += mm;
-		} else {
-			table1[i][0] = 0;
-			table2[i][0] = 76; 	//no arrow
-		}
-	}
-	val = 0;
-	for (int j = 1; j <= SIZE2; j++) {
-		if (nw) {
-			table1[0][j] = val;
-			table2[0][j] = -1; 	//backwards arrow
-			val += mm;
-		} else {
-			table1[0][j] = 0;
-			table2[0][j] = 76; 	//no arrow
-		}
-	}
-
-	//Begin parallel filling of diagonals
-	int minSize = min(SIZE1, SIZE2);
-	for(int diagonal = 1; diagonal <= minSize; diagonal++){
-		fillDiagonal(diagonal, nw);
-	}
-}
-
-void printString(char string[]){
-	int i = 0;
-	while(string[i] != '\0'){
-		printf("%c", string[i]);
-		i++;
-	}
-}
-
-void copyString(char str1[], char str2[]){
-    for (int i = 0; i < SIZE1; i++){
-        str1[i] = str2[i];
-    }
-}
-
-void copyString2(char str1[], const char str2[]){
-	for (int i = 0; i < SIZE1; i++) {
-		str1[i] = str2[i];
-	}
-}
-
-int compareDoubles(const void * a, const void * b){
-	return ( *(double*)a - *(double*)b );
-}
-
-/* Compare structs
-	int compareRelations(const void * a, const void *b){
-		relation f = *((relation*)a);
-		relation s = *((relation*)b);
-		if(f.value > s.value) return -1;
-		if(f.value < s.value) return 1;
-		return 0;
-	}
-*/
-
-void printSList(struct sNode *head){
-	struct sNode *ptr = head;
+//Print list as string
+void printCharList(struct node *head){
+	struct node *ptr = head;
 
 	while(ptr != NULL) {
-		printf("%c - ", ptr->value);
+		printf("%c ", ptr->cValue);
 		ptr = ptr->next;
 	}
-	printf("\n");
-}
-void printSMatrix(struct sMatrix *head){
-	struct sMatrix *ptr = head;
-	printf("Values table:\n");
-	while (ptr != NULL) {
-		printSList(ptr->value);
-		ptr = ptr->next;
-	}
-	printf("\n");
-}
-void printAList(struct aNode *head){
-	struct aNode *ptr = head;
 
-	while (ptr != NULL) {
-		if(ptr->value == 0){ printf("d - "); }
-		else if (ptr->value == -1) { printf("l - "); }
-		else if (ptr->value == 1) { printf("u - "); }
+	printf("\n");
+}
+
+//Print list as values table row
+void printValList(struct node *head) {
+	struct node *ptr = head;
+
+	while(ptr != NULL) {
+		printf("%i, ", ptr->nValue);
+		if(ptr->arrow == 0){ printf("d - "); }
+		else if (ptr->arrow == -1) { printf("l - "); }
+		else if (ptr->arrow == 1) { printf("u - "); }
 		else { printf("n - "); }
 		ptr = ptr->next;
 	}
+
 	printf("\n");
 }
-void printAMatrix(struct aMatrix *head) {
-	struct aMatrix *ptr = head;
-	printf("Arrow table:\n");
+
+//Print values table
+void printMatrix(struct matrix *head) {
+	struct matrix *ptr = head;
+
+	printf("Values table:\n");
 	while (ptr != NULL) {
-		printAList(ptr->value);
+		printValList(ptr->value);
 		ptr = ptr->next;
 	}
+
 	printf("\n");
 }
 
@@ -207,36 +99,122 @@ int max(int i1, int i2){
 }
 int max3(int i1, int i2, int i3){ return max(max(i1, i2), i3); }
 
-int checkChars(int i, int j){
-	if (String1[i] == String2[j]) { return m; }
+int checkChars(struct node *i, struct node *j){
+	if (i->nValue == j->nValue) { return m; }
 	else { return mm; }
 }
 
-void setValues(int i, int j, bool nw){
-	int v1 = table1[i - 1][j - 1] + checkChars(i - 1, j - 1);
-	int v2 = table1[i][j - 1] + gap; 	//backwards arrow
-	int v3 = table1[i - 1][j] + gap;	//upwards arrow
+void setValues(struct node *i, struct node *j, bool nw){
+	//int v1 = table1[i - 1][j - 1] + checkChars(i, j);
+
+	//int v2 = table1[i][j - 1] + gap; 	//backwards arrow
+	
+	//int v3 = table1[i - 1][j] + gap;	//upwards arrow
 	
 	int maxVal = max3(v1,v2,v3);
 	if (!nw) { maxVal = max(maxVal, 0); }
-	table1[i][j] = maxVal;
+	//table1[i][j] = maxVal;
 
-	if (maxVal == v1) { table2[i][j] = 0; }
-	else if (maxVal == v2) { table2[i][j] = -1; }
-	else if (maxVal == v3) { table2[i][j] = +1; }
-	else { table2[i][j] = 76; } //solo puede llegar si sw
+	//if (maxVal == v1) { table2[i][j] = 0; }
+	//else if (maxVal == v2) { table2[i][j] = -1; }
+	//else if (maxVal == v3) { table2[i][j] = +1; }
+	//else { table2[i][j] = 76; } //solo puede llegar si sw
 }
 
-void fillDiagonal(int diagonal, bool nw){
-	int i = diagonal;
-	int j = diagonal;
-
+void fillDiagonal(struct node *i, struct node *j, bool nw){
 	setValues(i, j, nw);
-	for(int i2 = i; i2 <= SIZE1; i2++){
+	struct node *i2 = i;
+	while(i2 != NULL){
 		setValues(i2, j, nw);
+		i2 = i2->next;
 	}
-	for(int j2 = j; j2 <= SIZE2; j2++){
+	struct node *j2 = j;
+	while (j2 != NULL) {
 		setValues(i, j2, nw);
+		j2 = j2->next;
 	}
 }
+
+void alignStrings(bool nw){//da prioridad a diagonales
+	//Initialize tables
+	int val;
+
+	tempM = (struct matrix*) malloc(sizeof(struct matrix));
+	temp = (struct node*) malloc(sizeof(struct node));
+	temp->cValue = '\0';
+	temp->nValue = 0;
+	temp->arrow = 76;
+	temp->next = NULL;
+	temp->prev = NULL;
+
+	tempM->value = temp;
+	tempM->next = NULL;
+	tempM->prev = NULL;
+
+	valuesTable = tempM;
+
+	val = 0;
+	string1Current = string1Head;
+	valuesTableCurrentValue = valuesTable->value;
+	
+	while (string1Current != NULL) {
+		if (nw) {
+			temp->nValue = val;
+			temp->arrow = -1;
+			val += mm;
+		} else {
+			temp->nValue = 0;
+			temp->arrow = 76;
+		}
+
+		temp->next = NULL;
+		temp->prev = NULL;
+		valuesTableCurrentValue->next = temp;
+		valuesTableCurrentValue = valuesTableCurrentValue->next;
+
+		string1Current = string1Current->next;
+	}
+
+	val = 0;
+	string2Current = string2Head;
+	valuesTableCurrentRow = valuesTable;
+	while (string2Current != NULL) {
+		if (nw) {
+			temp->nValue = val;
+			temp->arrow = 1;
+		} else {
+			temp->nValue = 0;
+			temp->arrow = 76;
+		}
+
+		temp->next = NULL;
+		temp->prev = NULL;
+
+		tempM->value = temp;
+		tempM->next = NULL;
+		tempM->prev = NULL;
+
+		valuesTableCurrentRow->next = tempM;
+		valuesTableCurrentRow = valuesTableCurrentRow->next;
+
+		string2Current = string2Current->next;
+	}
+
+	//Begin parallel filling of diagonals
+	string1Current = string1Head;
+	string2Current = string2Head;
+
+	valuesTableCurrentRow = valuesTable;
+	valuesTableCurrentValue = valuesTableCurrentRow->value;
+	valuesTableCurrentValue2 = valuesTableCurrentRow->next->value;
+
+	while (string1Current != NULL && string2Current != NULL) {
+		fillDiagonal(string1Current, string2Current, valuesTableCurrentValue, valuesTableCurrentValue2 nw);
+
+		string1Current = string1Current->next;
+		string2Current = string2Current->next;
+		valuesTableCurrentValue = 
+	}
+}
+
 

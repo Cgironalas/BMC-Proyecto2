@@ -353,6 +353,7 @@ void drawTable(){
     lblAligment2 = GTK_WIDGET(gtk_builder_get_object(builder, "lblAligment2"));;
 
 
+
     lblScoring =GTK_WIDGET(gtk_builder_get_object(builder, "lblMaxScoring"));
 
     if (flagType){

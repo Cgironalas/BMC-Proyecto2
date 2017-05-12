@@ -201,9 +201,9 @@ void drawValList(struct node *head,int start,int finish,int finishArrow,cairo_t 
     while(ptr != NULL) {
         cairo_set_source_rgb(cr, 0.1, 0.1, 0.1);
         cairo_move_to(cr,start ,finish);
-        char data[100];
+        char data[2];
         sprintf(data,"%d",ptr->nValue);
-        cairo_show_text(cr, data);
+          cairo_show_text(cr, data);
 
 
         if(ptr->arrow[0] == true)
@@ -229,7 +229,7 @@ void drawValList(struct node *head,int start,int finish,int finishArrow,cairo_t 
 
         ptr = ptr->next;
     }
-    printf("\n");
+
 }
 
 void drawMatrixValues(struct matrix *head,cairo_t * cr) {
@@ -265,7 +265,7 @@ static gboolean on_draw_event(GtkWidget *widget, cairo_t *cr,
 
 static void do_drawing(cairo_t *cr, GtkWidget *widget)
 {
-    printf("%d",vLength);
+
     GtkWidget *win = gtk_widget_get_toplevel(widget);
 
     int width, height;
@@ -290,7 +290,7 @@ static void do_drawing(cairo_t *cr, GtkWidget *widget)
     }
 
     start = 120;
-    for (int i =0;i<wLength+1;i++){
+    for (int i =0;i<vLength+1;i++){
         cairo_set_source_rgb(cr, 0.1, 0.1, 0.1);
         cairo_move_to(cr,start ,60);
         char data[1];
@@ -299,7 +299,7 @@ static void do_drawing(cairo_t *cr, GtkWidget *widget)
         start = start +50;
     }
     start = 130;
-    for (int i =0;i<vLength+1;i++){
+    for (int i =0;i<wLength+1;i++){
         cairo_set_source_rgb(cr, 0.1, 0.1, 0.1);
         cairo_move_to(cr,40 ,start);
         char data[1];
@@ -409,13 +409,13 @@ void getInformation(){
 
     setWeight(gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON(g_spin_match)),gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON(g_spin_mismatch)),gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON(g_spin_gap)));
 
-    for (int i=0;i<wLength;i++){
-        insertStr1(w[i]);
+    for (int i=0;i<vLength;i++){
+        insertStr2(v[i]);
     }
 
 
-    for (int i=0;i<vLength;i++){
-        insertStr2(v[i]);
+    for (int i=0;i<wLength;i++){
+        insertStr1(w[i]);
     }
     alignStrings(flagType);
 

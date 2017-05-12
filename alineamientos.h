@@ -30,8 +30,8 @@ struct node *str2Head = NULL;
 struct node *str2Curr = NULL;
 
 //Aligned strings
-struct node *alignmentResult1 = NULL;
-struct node *alignmentResult2 = NULL;
+struct matrix *alignRes1 = NULL;
+struct matrix *alignRes2 = NULL;
 
 //Table of values and arrows
 struct matrix *table = NULL;
@@ -43,7 +43,7 @@ struct node *tableUpVal = NULL;
 
 int m = 1;		//match weight
 int mm = -1;	//mismatch weight
-int gap = -2;	//gap weight
+int gap = -1;	//gap weight
 
 //Assign match, mismatch and gapenalty values
 void setWeight(int mValue, int mmValue, int gapValue){
@@ -60,6 +60,7 @@ void printCharList(struct node *head){
 		ptr = ptr->next;
 	}
 	printf("\n");
+	free(ptr);
 }
 //Print list as values table row
 void printValList(struct node *head) {
@@ -73,6 +74,7 @@ void printValList(struct node *head) {
 		ptr = ptr->next;
 	}
 	printf("\n");
+	free(ptr);
 }
 //Print values table
 void printMatrix(struct matrix *head) {
@@ -83,6 +85,7 @@ void printMatrix(struct matrix *head) {
 		ptr = ptr->next;
 	}
 	printf("\n");
+	free(ptr);
 }
 
 //Min max functions
@@ -148,6 +151,8 @@ void insertStr2(char c) {
 
 //Add a row to the table
 void insertRow(bool arrows[3], int value){
+	tableUpVal = tableCurrRow->value;
+
 	struct node *aux = (struct node*) malloc(sizeof(struct node));
 	aux->cValue = '\0';
 	aux->nValue = value;
@@ -157,7 +162,7 @@ void insertRow(bool arrows[3], int value){
 	aux->next = NULL;
 	aux->prev = NULL;
 	aux->down = NULL;
-	aux->up = NULL;
+	aux->up = tableUpVal;
 
 	struct matrix *nRow = (struct matrix*) malloc(sizeof(struct matrix));
 	nRow->value = aux;
@@ -165,7 +170,6 @@ void insertRow(bool arrows[3], int value){
 	nRow->prev = tableCurrRow;
 
 	tableCurrRow->next = nRow;
-	tableUpVal = tableCurrRow->value;
 	tableCurrRow = tableCurrRow->next;
 	tableCurrVal = tableCurrRow->value;
 }
@@ -186,9 +190,8 @@ void setTableValue(bool arrows[3], int value) {
 	aux->arrow[1] = arrows[1];
 	aux->arrow[2] = arrows[2];
 	aux->next = NULL;
-	aux->prev = NULL;
+	aux->prev = tableCurrVal;
 	aux->down = NULL;
-	aux->up = NULL;
 
 	if(table == NULL){
 		printf("Create table\n");
@@ -200,8 +203,9 @@ void setTableValue(bool arrows[3], int value) {
 		table = nTable;
 		tableCurrRow = table;
 		tableCurrVal = tableCurrRow->value;
+		tableUpVal = NULL;
 	} else {
-		if(tableUpVal != NULL) { tableUpVal->down = aux; }
+		if(tableUpVal != NULL) { tableUpVal = tableUpVal->next; tableUpVal->down = aux; }
 		aux->up = tableUpVal;
 
 		//aux->down = tableCurrVal;
@@ -244,9 +248,6 @@ void fillDiagonal(struct node *i, struct node *j, bool nw){
 	struct node *tempCurrVal = tableCurrVal;
 	struct node *tempUpVal = tableUpVal;
 
-	//struct node *tempCurrVal2 = tableCurrVal->down;
-	//struct node *tempUpVal2 = tableUpVal->down;
-
 	struct node *i2 = i;
 	while(i2 != NULL){
 		setValues(i2, j, tempCurrVal, tempUpVal, nw);
@@ -255,36 +256,18 @@ void fillDiagonal(struct node *i, struct node *j, bool nw){
 		tempCurrVal = tempCurrVal->next;
 		tempUpVal = tempUpVal->next;
 	}
-	printMatrix(table);/*
-	printf("HERE\n");
-
-	struct node *j2 = j->next;
-	while (j2 != NULL) {
-		printf("%c, %c\n", i->cValue, j2->cValue);
-		setValues(i, j2, tempCurrVal2, tempUpVal2, nw);
-		j2 = j2->next;
-
-		tempCurrVal2 = tempCurrVal2->down;
-		tempUpVal2 = tempUpVal2->down;
-	}
-	printMatrix(table);
-	printf("HERE2\n");*/
 }
 
 void fillCurrentRow(bool arrows[3], bool nw){
-	int val = -2;
+	int val = gap;
 	bool temp[3];
-	temp[0] = arrows[0];
-	temp[1] = arrows[1];
-	temp[2] = arrows[2];
-	struct node *currentUp;
 	struct node *current = str1Head;
-
-	if(tableUpVal != NULL) { currentUp = tableUpVal; }
-	else { currentUp = NULL; }
 
 	while (current != NULL) {
 		if (nw) {
+			temp[0] = arrows[0];
+			temp[1] = arrows[1];
+			temp[2] = arrows[2];
 			setTableValue(temp, val);
 			val += gap;
 		} else {
@@ -294,10 +277,92 @@ void fillCurrentRow(bool arrows[3], bool nw){
 			setTableValue(temp, 0);
 		}
 
-		if (currentUp != NULL ) { currentUp = currentUp->next; }
-
 		current = current->next;
 	}
+}
+
+bool checkCurrentIsHead(){
+	if(tableCurrVal->prev == NULL && tableCurrVal->up == NULL){
+		return false;
+	} else {
+		return false;
+	}
+}
+
+void insertAlign(char c, bool i){
+	struct node *first = (struct node*) malloc(sizeof(struct node));
+	first->cValue = c;
+	first->nValue = 0;
+	first->arrow[0] = false;
+	first->arrow[1] = false;
+	first->arrow[2] = false;
+	
+	first->prev = NULL;
+	first->down = NULL;
+	first->up = NULL;
+	if (i) {
+		first->next = alignRes1->value;
+		alignRes1->value = first;
+	} else {
+		first->next = alignRes2->value;
+		alignRes2->value = first;
+	}
+}
+
+void setResults(bool nw){
+	str1Curr = str1Head;
+	while(str1Curr->next != NULL){ str1Curr = str1Curr->next; }
+
+	str2Curr = str2Head;
+	while(str2Curr->next != NULL){ str2Curr = str2Curr->next; }
+
+	tableCurrRow = table;
+	while(tableCurrRow->next != NULL) { tableCurrRow = tableCurrRow->next; }
+
+	tableCurrVal = tableCurrRow->value;
+	while(tableCurrVal->next != NULL) { tableCurrVal = tableCurrVal->next; }
+
+	//printf("Last Cell: ");
+	//printValList(tableCurrVal);
+
+	alignRes1 = (struct matrix*) malloc(sizeof(struct matrix));
+	alignRes1->next = NULL;
+	alignRes1->prev = NULL;
+	
+	alignRes2 = (struct matrix*) malloc(sizeof(struct matrix));
+	alignRes2->next = NULL;
+	alignRes2->prev = NULL;
+
+	while(str1Curr != NULL && str2Curr != NULL) {
+		//printf("\nChars: %c, %c\n", str1Curr->cValue, str2Curr->cValue);
+		//printf("CurrentCell: ");
+		//printValList(tableCurrVal);
+		if (nw){
+			if(tableCurrVal->arrow[0] == true) {
+				insertAlign(str1Curr->cValue, true);
+				insertAlign(str2Curr->cValue, false);
+				str1Curr = str1Curr->prev;
+				str2Curr = str2Curr->prev;
+				tableCurrVal = tableCurrVal->up->prev;
+			} else if(tableCurrVal->arrow[1] == true) {
+				insertAlign('_', true);
+				insertAlign(str2Curr->cValue, false);
+				str2Curr = str2Curr->prev;
+				tableCurrVal = tableCurrVal->up;
+			} else {
+				insertAlign(str1Curr->cValue, true);
+				insertAlign('_', false);
+				str1Curr = str1Curr->prev;
+				tableCurrVal = tableCurrVal->prev;
+			}
+		} else {
+
+		}
+	}
+	printf("List 1: ");
+	printCharList(alignRes1->value);
+	printf("\nList 2: ");
+	printCharList(alignRes2->value);
 }
 
 void alignStrings(bool nw){
@@ -307,13 +372,11 @@ void alignStrings(bool nw){
 
 	//Adds value of table[0][0]
 	setTableValue(arrows, value);
-	//printMatrix(table);
 
 	arrows[2] = true;
 	fillCurrentRow(arrows, nw);
-	//printMatrix(table);
 
-	int val = -2;
+	int val = gap;
 	str2Curr = str2Head;
 	while (str2Curr != NULL) {
 		if (nw) {
@@ -337,34 +400,20 @@ void alignStrings(bool nw){
 
 		str2Curr = str2Curr->next;
 	}
-	printMatrix(table);
 
-	//Begin filling of diagonals
 	str1Curr = str1Head;
 	str2Curr = str2Head;
 
 	tableCurrRow = table;
-	//tableUpVal = tableCurrRow->value;
-
-	//tableCurrRow = tableCurrRow->next;
-	//tableCurrVal = tableCurrRow->value;
-
-	printf("Here\n");
 	
 	while (str2Curr != NULL) {
 		tableUpVal = tableCurrRow->value;
-
 		tableCurrRow = tableCurrRow->next;
 		tableCurrVal = tableCurrRow->value;
-		printf("This1\n");
 		fillDiagonal(str1Curr, str2Curr, nw);
-		printf("This2\n");
 		str1Curr = str1Head;
 		str2Curr = str2Curr->next;
-		printf("This3\n");
-		//tableUpVal = tableCurrRow->value;
-		//tableCurrRow = tableCurrRow->next;
-		//tableCurrVal = tableCurrRow->value;
-		//printf("This4\n");
 	}
+	printMatrix(table);
+	setResults(nw);
 }

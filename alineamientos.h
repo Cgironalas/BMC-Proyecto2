@@ -21,6 +21,9 @@ struct matrix{
 	struct matrix* prev;
 };
 
+int maxScore = 0;
+int alignScoring = 0;
+
 //First string
 struct node *str1Head = NULL;
 struct node *str1Curr = NULL;
@@ -87,6 +90,16 @@ void printMatrix(struct matrix *head) {
 	printf("\n");
 	free(ptr);
 }
+void printCMatrix(struct matrix *head) {
+	struct matrix *ptr = head;
+	printf("Values table:\n");
+	while (ptr != NULL) {
+		printCharList(ptr->value);
+		ptr = ptr->next;
+	}
+	printf("\n");
+	free(ptr);
+}
 
 //Min max functions
 int min(int i1, int i2){
@@ -111,16 +124,16 @@ void insertStr1(char c) {
 	aux->prev = NULL;
 	aux->down = NULL;
 
-	if(str1Head == NULL){
+	if(str2Head == NULL){
 		//printf("Insert first\n");
-		aux->next = str1Head;
-		str1Head = aux;
-		str1Curr = str1Head;
+		aux->next = str2Head;
+		str2Head = aux;
+		str2Curr = str2Head;
 	} else {
 		//printf("Insert any\n");
-		aux->prev = str1Curr;
-		str1Curr->next = aux;
-		str1Curr = str1Curr->next;
+		aux->prev = str2Curr;
+		str2Curr->next = aux;
+		str2Curr = str2Curr->next;
 	}
 }
 //Insert values to second string
@@ -136,16 +149,16 @@ void insertStr2(char c) {
 	aux->down = NULL;
 	aux->up = NULL;
 
-	if(str2Head == NULL){
+	if(str1Head == NULL){
 		//printf("Insert first\n");
-		aux->next = str2Head;
-		str2Head = aux;
-		str2Curr = str2Head;
+		aux->next = str1Head;
+		str1Head = aux;
+		str1Curr = str1Head;
 	} else {
 		//printf("Insert any\n");
-		aux->prev = str2Curr;
-		str2Curr->next = aux;
-		str2Curr = str2Curr->next;
+		aux->prev = str1Curr;
+		str1Curr->next = aux;
+		str1Curr = str1Curr->next;
 	}
 }
 
@@ -179,6 +192,8 @@ void setTableValue2(bool arrows[3], int value, struct node *tempCurr) {
 	tempCurr->next->arrow[0] = arrows[0];
 	tempCurr->next->arrow[1] = arrows[1];
 	tempCurr->next->arrow[2] = arrows[2];
+
+	maxScore = max(maxScore, value);
 }
 
 //Set values to table
@@ -325,19 +340,27 @@ void setResults(bool nw){
 	//printf("Last Cell: ");
 	//printValList(tableCurrVal);
 
-	alignRes1 = (struct matrix*) malloc(sizeof(struct matrix));
-	alignRes1->next = NULL;
-	alignRes1->prev = NULL;
-	
-	alignRes2 = (struct matrix*) malloc(sizeof(struct matrix));
-	alignRes2->next = NULL;
-	alignRes2->prev = NULL;
+	alignScoring = tableCurrVal->nValue;
 
-	while(str1Curr != NULL && str2Curr != NULL) {
-		//printf("\nChars: %c, %c\n", str1Curr->cValue, str2Curr->cValue);
-		//printf("CurrentCell: ");
-		//printValList(tableCurrVal);
-		if (nw){
+	struct matrix *alignRes11 = (struct matrix*) malloc(sizeof(struct matrix));
+	alignRes11->value = NULL;
+	alignRes11->next = NULL;
+	alignRes11->prev = NULL;
+	
+	struct matrix *alignRes22 = (struct matrix*) malloc(sizeof(struct matrix));
+	alignRes22->value = NULL;
+	alignRes22->next = NULL;
+	alignRes22->prev = NULL;
+
+	alignRes1 = alignRes11;
+	alignRes2 = alignRes22;
+
+	
+	printf("\nChars: %c, %c\n", str1Curr->cValue, str2Curr->cValue);
+	//printf("CurrentCell: ");
+	//printValList(tableCurrVal);
+	if (nw){
+		while(str1Curr != NULL && str2Curr != NULL) {
 			if(tableCurrVal->arrow[0] == true) {
 				insertAlign(str1Curr->cValue, true);
 				insertAlign(str2Curr->cValue, false);
@@ -355,17 +378,62 @@ void setResults(bool nw){
 				str1Curr = str1Curr->prev;
 				tableCurrVal = tableCurrVal->prev;
 			}
-		} else {
-
+		}
+		//printf("List 1: ");
+		//printCharList(alignRes1->value);
+		//printf("\nList 2: ");
+		//printCharList(alignRes2->value);
+	} else {
+		printf("ws\n");
+		bool doBreak = false;
+		str2Curr = str2Curr;
+		tableCurrRow = table->next;
+		while(tableCurrRow != NULL) {
+			tableCurrVal = tableCurrRow->value->next;
+			str1Curr = str1Head;
+			while(tableCurrVal != NULL){
+				if(tableCurrVal->nValue == maxScore){
+					doBreak = true;
+				}
+				if(doBreak){
+					break;
+				}
+				tableCurrVal = tableCurrVal->next;
+				str1Curr = str1Curr->next;
+			}
+			if(doBreak){
+				break;
+			}
+			str2Curr = str2Curr->next;
+			tableCurrRow = tableCurrRow->next;
+		}
+		while(str1Curr != NULL && str2Curr != NULL) {
+			if(tableCurrVal->arrow[0] == true) {
+				insertAlign(str1Curr->cValue, true);
+				insertAlign(str2Curr->cValue, false);
+				str1Curr = str1Curr->prev;
+				str2Curr = str2Curr->prev;
+				tableCurrVal = tableCurrVal->up->prev;
+			} else if(tableCurrVal->arrow[1] == true) {
+				insertAlign('_', true);
+				insertAlign(str2Curr->cValue, false);
+				str2Curr = str2Curr->prev;
+				tableCurrVal = tableCurrVal->up;
+			} else {
+				insertAlign(str1Curr->cValue, true);
+				insertAlign('_', false);
+				str1Curr = str1Curr->prev;
+				tableCurrVal = tableCurrVal->prev;
+			}
 		}
 	}
-	printf("List 1: ");
-	printCharList(alignRes1->value);
-	printf("\nList 2: ");
-	printCharList(alignRes2->value);
+	printCMatrix(alignRes1);
+	printCMatrix(alignRes2);
 }
 
 void alignStrings(bool nw){
+	printCharList(str1Head);
+	printCharList(str2Head);
 	//Initialize table
 	int value = 0;
 	bool arrows[3] = {0, 0, 0};

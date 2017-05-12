@@ -41,9 +41,6 @@ struct matrix *tableCurrRow = NULL;
 struct node *tableCurrVal = NULL;
 struct node *tableUpVal = NULL;
 
-struct node *temp;
-struct matrix *tempM;
-
 int m = 1;		//match weight
 int mm = -1;	//mismatch weight
 int gap = -2;	//gap weight
@@ -68,13 +65,11 @@ void printCharList(struct node *head){
 void printValList(struct node *head) {
 	struct node *ptr = head;
 	while(ptr != NULL) {
-		printf("(%i, {", ptr->nValue);
-		if(ptr->arrow[0] == true){ printf("d, "); }
-		else { printf("n, "); }
-		if (ptr->arrow[1] == true) { printf("l, "); }
-		else { printf("n, "); }
-		if (ptr->arrow[2] == true) { printf("u}) * "); }
-		else { printf("n}) * "); }
+		printf("(%i,{", ptr->nValue);
+		if(ptr->arrow[0] == true){ printf("d "); }
+		if (ptr->arrow[1] == true) { printf("u "); }
+		if (ptr->arrow[2] == true) { printf("l"); }
+		printf("}) * ");
 		ptr = ptr->next;
 	}
 	printf("\n");
@@ -175,6 +170,13 @@ void insertRow(bool arrows[3], int value){
 	tableCurrVal = tableCurrRow->value;
 }
 
+void setTableValue2(bool arrows[3], int value, struct node *tempCurr) {
+	tempCurr->next->nValue = value;
+	tempCurr->next->arrow[0] = arrows[0];
+	tempCurr->next->arrow[1] = arrows[1];
+	tempCurr->next->arrow[2] = arrows[2];
+}
+
 //Set values to table
 void setTableValue(bool arrows[3], int value) {
 	struct node *aux = (struct node*) malloc(sizeof(struct node));
@@ -202,7 +204,7 @@ void setTableValue(bool arrows[3], int value) {
 		if(tableUpVal != NULL) { tableUpVal->down = aux; }
 		aux->up = tableUpVal;
 
-		aux->down = tableCurrVal;
+		//aux->down = tableCurrVal;
 		tableCurrVal->next = aux;
 		tableCurrVal = tableCurrVal->next;
 	}
@@ -214,10 +216,10 @@ int checkChars(struct node *i, struct node *j){
 	else { return mm; }
 }
 
-void setValues(struct node *i, struct node *j, struct node *tVal, bool nw){
-	int v1 = tVal->nValue + checkChars(i, j);
-	int v2 = tVal->next->nValue + gap;
-	int v3 = tVal->down->nValue + gap;
+void setValues(struct node *i, struct node *j, struct node *tempCurr, struct node *tempUp, bool nw){
+	int v1 = tempUp->nValue + checkChars(i, j);
+	int v2 = tempUp->next->nValue + gap;
+	int v3 = tempCurr->nValue + gap;
 	
 	int maxVal = max3(v1, v2, v3);
 	if (!nw) { maxVal = max(maxVal, 0); }
@@ -235,21 +237,38 @@ void setValues(struct node *i, struct node *j, struct node *tVal, bool nw){
 	if (maxVal == v3) { arrows[2] = true; }
 	else { arrows[2] = false; }
 
-	setTableValue(arrows, maxVal);
+	setTableValue2(arrows, maxVal, tempCurr);
 }
 
-void fillDiagonal(struct node *i, struct node *j, struct node *tVal, bool nw){
-	setValues(i, j, tVal, nw);
+void fillDiagonal(struct node *i, struct node *j, bool nw){
+	struct node *tempCurrVal = tableCurrVal;
+	struct node *tempUpVal = tableUpVal;
+
+	//struct node *tempCurrVal2 = tableCurrVal->down;
+	//struct node *tempUpVal2 = tableUpVal->down;
+
 	struct node *i2 = i;
 	while(i2 != NULL){
-		setValues(i2, j, tVal, nw);
+		setValues(i2, j, tempCurrVal, tempUpVal, nw);
 		i2 = i2->next;
+
+		tempCurrVal = tempCurrVal->next;
+		tempUpVal = tempUpVal->next;
 	}
-	struct node *j2 = j;
+	printMatrix(table);/*
+	printf("HERE\n");
+
+	struct node *j2 = j->next;
 	while (j2 != NULL) {
-		setValues(i, j2, tVal, nw);
+		printf("%c, %c\n", i->cValue, j2->cValue);
+		setValues(i, j2, tempCurrVal2, tempUpVal2, nw);
 		j2 = j2->next;
+
+		tempCurrVal2 = tempCurrVal2->down;
+		tempUpVal2 = tempUpVal2->down;
 	}
+	printMatrix(table);
+	printf("HERE2\n");*/
 }
 
 void fillCurrentRow(bool arrows[3], bool nw){
@@ -269,6 +288,9 @@ void fillCurrentRow(bool arrows[3], bool nw){
 			setTableValue(temp, val);
 			val += gap;
 		} else {
+			temp[0] = false;
+			temp[1] = false;
+			temp[2] = false;
 			setTableValue(temp, 0);
 		}
 
@@ -285,11 +307,11 @@ void alignStrings(bool nw){
 
 	//Adds value of table[0][0]
 	setTableValue(arrows, value);
-	printMatrix(table);
+	//printMatrix(table);
 
 	arrows[2] = true;
 	fillCurrentRow(arrows, nw);
-	printMatrix(table);
+	//printMatrix(table);
 
 	int val = -2;
 	str2Curr = str2Head;
@@ -322,15 +344,27 @@ void alignStrings(bool nw){
 	str2Curr = str2Head;
 
 	tableCurrRow = table;
-	tableCurrVal = tableCurrRow->value;
+	//tableUpVal = tableCurrRow->value;
+
+	//tableCurrRow = tableCurrRow->next;
+	//tableCurrVal = tableCurrRow->value;
 
 	printf("Here\n");
-	/*
-	while (str1Curr != NULL && str2Curr != NULL) {
-		fillDiagonal(str1Curr, str2Curr, tableCurrVal, nw);
+	
+	while (str2Curr != NULL) {
+		tableUpVal = tableCurrRow->value;
 
-		str1Curr = str1Curr->next;
+		tableCurrRow = tableCurrRow->next;
+		tableCurrVal = tableCurrRow->value;
+		printf("This1\n");
+		fillDiagonal(str1Curr, str2Curr, nw);
+		printf("This2\n");
+		str1Curr = str1Head;
 		str2Curr = str2Curr->next;
-		tableCurrVal = tableCurrVal->down->next;
-	}*/
+		printf("This3\n");
+		//tableUpVal = tableCurrRow->value;
+		//tableCurrRow = tableCurrRow->next;
+		//tableCurrVal = tableCurrRow->value;
+		//printf("This4\n");
+	}
 }

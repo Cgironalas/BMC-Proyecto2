@@ -24,6 +24,7 @@ GtkWidget *radioNW;
 GtkWidget *radioSW;
 GtkWidget *lblAligment2;
 GtkWidget *lblAligment1;
+GtkWidget * lblScoring ;
 
 /*Drawing*/
 GtkWidget *darea;
@@ -32,7 +33,7 @@ GtkWidget *viewport;
 GtkWidget * swindow ;
 
 /*Bandera de algoritmo 1 para NW 2 para SW*/
-int flagType = 1;
+bool flagType = TRUE;
 
 /*Variables
   0 para manual
@@ -201,9 +202,9 @@ void drawValList(struct node *head,int start,int finish,int finishArrow,cairo_t 
     while(ptr != NULL) {
         cairo_set_source_rgb(cr, 0.1, 0.1, 0.1);
         cairo_move_to(cr,start ,finish);
-        char data[100];
+        char data[2];
         sprintf(data,"%d",ptr->nValue);
-        cairo_show_text(cr, data);
+          cairo_show_text(cr, data);
 
 
         if(ptr->arrow[0] == true)
@@ -229,7 +230,7 @@ void drawValList(struct node *head,int start,int finish,int finishArrow,cairo_t 
 
         ptr = ptr->next;
     }
-    printf("\n");
+
 }
 
 void drawMatrixValues(struct matrix *head,cairo_t * cr) {
@@ -265,7 +266,7 @@ static gboolean on_draw_event(GtkWidget *widget, cairo_t *cr,
 
 static void do_drawing(cairo_t *cr, GtkWidget *widget)
 {
-    printf("%d",vLength);
+
     GtkWidget *win = gtk_widget_get_toplevel(widget);
 
     int width, height;
@@ -290,7 +291,7 @@ static void do_drawing(cairo_t *cr, GtkWidget *widget)
     }
 
     start = 120;
-    for (int i =0;i<wLength+1;i++){
+    for (int i =0;i<vLength+1;i++){
         cairo_set_source_rgb(cr, 0.1, 0.1, 0.1);
         cairo_move_to(cr,start ,60);
         char data[1];
@@ -299,7 +300,7 @@ static void do_drawing(cairo_t *cr, GtkWidget *widget)
         start = start +50;
     }
     start = 130;
-    for (int i =0;i<vLength+1;i++){
+    for (int i =0;i<wLength+1;i++){
         cairo_set_source_rgb(cr, 0.1, 0.1, 0.1);
         cairo_move_to(cr,40 ,start);
         char data[1];
@@ -351,6 +352,20 @@ void drawTable(){
     lblAligment1 = GTK_WIDGET(gtk_builder_get_object(builder, "lblAligment1"));
     lblAligment2 = GTK_WIDGET(gtk_builder_get_object(builder, "lblAligment2"));;
 
+
+    lblScoring =GTK_WIDGET(gtk_builder_get_object(builder, "lblMaxScoring"));
+
+    if (flagType){
+        char  data[100];
+        sprintf(data,"%d",alignScoring);
+        gtk_label_set_text(GTK_LABEL(lblScoring),data);
+    }
+    else{
+        char  data[100];
+        sprintf(data,"%d",maxScore);
+        gtk_label_set_text(GTK_LABEL(lblScoring),data);
+    }
+
     g_signal_connect(G_OBJECT(darea), "draw",
                      G_CALLBACK(on_draw_event), NULL);
 
@@ -399,23 +414,23 @@ void getInformation(){
 
 
     if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(radioNW))==TRUE){
-        flagType = 2;
+        flagType = true;
     }
     if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(radioSW))==TRUE){
-        flagType = 1;
+        flagType = false;
     }
 
 
 
     setWeight(gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON(g_spin_match)),gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON(g_spin_mismatch)),gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON(g_spin_gap)));
 
-    for (int i=0;i<wLength;i++){
-        insertStr1(w[i]);
+    for (int i=0;i<vLength;i++){
+        insertStr2(v[i]);
     }
 
 
-    for (int i=0;i<vLength;i++){
-        insertStr2(v[i]);
+    for (int i=0;i<wLength;i++){
+        insertStr1(w[i]);
     }
     alignStrings(flagType);
 

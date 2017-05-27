@@ -34,9 +34,7 @@ struct node *str2Curr = NULL;
 
 //Aligned strings
 struct matrix *alignRes1 = NULL;
-struct matrix *alignRes1Aux = NULL;
 struct matrix *alignRes2 = NULL;
-struct matrix *alignRes2Aux = NULL;
 
 //Table of values and arrows
 struct matrix *table = NULL;
@@ -94,12 +92,12 @@ void printMatrix(struct matrix *head) {
 }
 void printCMatrix(struct matrix *head) {
 	struct matrix *ptr = head;
-	printf("Values table:\n");
+	//printf("Values table:\n");
 	while (ptr != NULL) {
 		printCharList(ptr->value);
 		ptr = ptr->next;
 	}
-	printf("\n\n\n");
+	printf("\n");
 	free(ptr);
 }
 
@@ -298,6 +296,14 @@ void fillCurrentRow(bool arrows[3], bool nw){
 	}
 }
 
+bool checkCurrentIsHead(){
+	if(tableCurrVal->prev == NULL && tableCurrVal->up == NULL){
+		return false;
+	} else {
+		return false;
+	}
+}
+
 void insertAlign(char c, bool i){
 	struct node *first = (struct node*) malloc(sizeof(struct node));
 	first->cValue = c;
@@ -310,69 +316,12 @@ void insertAlign(char c, bool i){
 	first->down = NULL;
 	first->up = NULL;
 	if (i) {
-		first->next = alignRes1Aux->value;
-		alignRes1Aux->value = first;
+		first->next = alignRes1->value;
+		alignRes1->value = first;
 	} else {
-		first->next = alignRes2Aux->value;
-		alignRes2Aux->value = first;
+		first->next = alignRes2->value;
+		alignRes2->value = first;
 	}
-}
-
-void addResult(struct node *pstr1, struct node *pstr2, struct node *pcurr){
-	struct matrix *nnew1 = (struct matrix*) malloc(sizeof(struct matrix));
-	nnew1->next = NULL;
-	nnew1->prev = alignRes1Aux;
-	nnew1->value = NULL;
-
-	alignRes1Aux->next = nnew1;
-
-	alignRes1Aux = nnew1;
-
-	struct matrix *nnew2 = (struct matrix*) malloc(sizeof(struct matrix));
-	nnew2->next = NULL;
-	nnew2->prev = alignRes2Aux;
-	nnew2->value = NULL;
-
-	alignRes2Aux->next = nnew2;
-
-	alignRes2Aux = nnew2;
-
-	struct node *str1 = pstr1;
-	struct node *str2 = pstr2;
-	struct node *curr = pcurr;
-	while(str1 != NULL && str2 != NULL) {
-		if(curr->arrow[0] == true) {
-			insertAlign(str1->cValue, true);
-			insertAlign(str2->cValue, false);
-			str1 = str1->prev;
-			str2 = str2->prev;
-			curr = curr->up->prev;
-		} else if(curr->arrow[1] == true) {
-			insertAlign('_', true);
-			insertAlign(str2->cValue, false);
-			str2 = str2->prev;
-			curr = curr->up;
-		} else {
-			insertAlign(str1->cValue, true);
-			insertAlign('_', false);
-			str1 = str1->prev;
-			curr = curr->prev;
-		}
-	}
-	printf("test\n");
-	if(str1 == NULL && str2 != NULL){
-		insertAlign('_', true);
-		insertAlign(str2->cValue, false);
-		str2 = str2->prev;
-		curr = curr->up;
-	} 
-	if(str2 == NULL && str1 != NULL) {
-		insertAlign(str1->cValue, true);
-		insertAlign('_', false);
-		str1 = str1->prev;
-		curr = curr->prev;
-	}
-	printf("Here\n");
 }
 
 void setResults(bool nw){
@@ -406,9 +355,6 @@ void setResults(bool nw){
 	alignRes1 = alignRes11;
 	alignRes2 = alignRes22;
 
-	alignRes1Aux = alignRes1;
-	alignRes2Aux = alignRes2;
-
 	
 	printf("\nChars: %c, %c\n", str1Curr->cValue, str2Curr->cValue);
 	//printf("CurrentCell: ");
@@ -437,9 +383,9 @@ void setResults(bool nw){
 		//printCharList(alignRes1->value);
 		//printf("\nList 2: ");
 		//printCharList(alignRes2->value);
-		printf("Scoring óptimo: %i\n", alignScoring);
 	} else {
 		printf("ws\n");
+		bool doBreak = false;
 		str2Curr = str2Head;
 		tableCurrRow = table->next;
 		while(tableCurrRow != NULL) {
@@ -447,20 +393,42 @@ void setResults(bool nw){
 			str1Curr = str1Head;
 			while(tableCurrVal != NULL){
 				if(tableCurrVal->nValue == maxScore){
-					addResult(str1Curr, str2Curr, tableCurrVal);
+					doBreak = true;
+				}
+				if(doBreak){
+					break;
 				}
 				tableCurrVal = tableCurrVal->next;
 				str1Curr = str1Curr->next;
 			}
+			if(doBreak){
+				break;
+			}
 			str2Curr = str2Curr->next;
 			tableCurrRow = tableCurrRow->next;
 		}
-		
-		printf("Mayor scoring %i\n", maxScore);
+		while(str1Curr != NULL && str2Curr != NULL) {
+			if(tableCurrVal->arrow[0] == true) {
+				insertAlign(str1Curr->cValue, true);
+				insertAlign(str2Curr->cValue, false);
+				str1Curr = str1Curr->prev;
+				str2Curr = str2Curr->prev;
+				tableCurrVal = tableCurrVal->up->prev;
+			} else if(tableCurrVal->arrow[1] == true) {
+				insertAlign('_', true);
+				insertAlign(str2Curr->cValue, false);
+				str2Curr = str2Curr->prev;
+				tableCurrVal = tableCurrVal->up;
+			} else {
+				insertAlign(str1Curr->cValue, true);
+				insertAlign('_', false);
+				str1Curr = str1Curr->prev;
+				tableCurrVal = tableCurrVal->prev;
+			}
+		}
 	}
 	printCMatrix(alignRes1);
 	printCMatrix(alignRes2);
-
 }
 
 void alignStrings(bool nw){

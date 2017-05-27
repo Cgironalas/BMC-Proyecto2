@@ -371,8 +371,8 @@ void drawTable(){
                      G_CALLBACK(on_draw_event), NULL);
 
 
-    gtk_label_set_text(GTK_LABEL(lblAligment1),"HOLA");
-    gtk_label_set_text(GTK_LABEL(lblAligment2),"HOLA");
+    //gtk_label_set_text(GTK_LABEL(lblAligment1),"HOLA");
+    //gtk_label_set_text(GTK_LABEL(lblAligment2),"HOLA");
 
 
     g_signal_connect(G_OBJECT(window), "destroy",
